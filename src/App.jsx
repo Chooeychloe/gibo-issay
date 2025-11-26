@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { createClient } from "@supabase/supabase-js";
 import MasonryGrid from "./components/MasonryGrid";
 import PasswordModal from "./components/PasswordModal";
 import FullImageModal from "./components/FullImageModal";
 
-const CLOUD_NAME = "dn6f6gtjm";
-const UPLOAD_PRESET = "wedding_upload";
+// --- Supabase Setup ---
+const SUPABASE_URL = 'https://csnwhimbfcqnymjugsom.supabase.co' // your URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbndoaW1iZmNxbnltanVnc29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNDc1NzksImV4cCI6MjA3OTcyMzU3OX0.exwo5xPHyjm7K913k9lMP75w-BZabXlDAWLNWHkE2y0' // your anon key
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Password to delete images
 const DELETE_PASSWORD = "secret123";
+
+// Storage folder name
+const STORAGE_FOLDER = "wedding_photos";
 
 export default function App() {
   const [images, setImages] = useState([]);
@@ -14,51 +21,86 @@ export default function App() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [fullImage, setFullImage] = useState(null);
 
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("images") || "[]");
-    requestAnimationFrame(() => {
-      setImages(stored.map((url) => ({ url, showDelete: false })));
-    });
-  }, []);
+  // Load images from Supabase storage
+  const fetchImages = async () => {
+    const { data, error } = await supabase.storage
+      .from(STORAGE_FOLDER)
+      .list("", { limit: 100, offset: 0 });
 
-  const handleUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    const uploadedUrls = [];
-
-    for (let file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      try {
-        const res = await axios.post(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-          formData
-        );
-        uploadedUrls.push({ url: res.data.secure_url, showDelete: false });
-      } catch (err) {
-        console.error("Upload error:", err);
-      }
+    if (error) {
+      console.error("Error fetching images:", error.message);
+      return;
     }
 
-    const finalList = [...images, ...uploadedUrls];
-    setImages(finalList);
-    localStorage.setItem(
-      "images",
-      JSON.stringify(finalList.map((img) => img.url))
-    );
+    // Get public URLs
+    const urls = data.map((file) => ({
+      url: supabase.storage.from(STORAGE_FOLDER).getPublicUrl(file.name).data.publicUrl,
+      name: file.name,
+      showDelete: false,
+    }));
+
+    setImages(urls);
   };
 
-  // Delete image after correct password
-  const handleDeleteConfirmed = () => {
+  useEffect(() => {
+  let isMounted = true; // flag to prevent state update if unmounted
+
+  const loadImages = async () => {
+    const { data, error } = await supabase.storage
+      .from(STORAGE_FOLDER)
+      .list("", { limit: 100, offset: 0 });
+
+    if (!error && isMounted) {
+      const urls = data.map((file) => ({
+        url: supabase.storage.from(STORAGE_FOLDER).getPublicUrl(file.name).data.publicUrl,
+        name: file.name,
+        showDelete: false,
+      }));
+      setImages(urls);
+    }
+  };
+
+  loadImages();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
+
+  // Upload images
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    for (let file of files) {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { error } = await supabase.storage
+        .from(STORAGE_FOLDER)
+        .upload(fileName, file);
+
+      if (error) {
+        console.error("Upload error:", error.message);
+      }
+    }
+    fetchImages();
+  };
+
+  // Delete image after password
+  const handleDeleteConfirmed = async () => {
     if (deleteIndex === null) return;
+    const image = images[deleteIndex];
+
+    const { error } = await supabase.storage
+      .from(STORAGE_FOLDER)
+      .remove([image.name]);
+
+    if (error) {
+      console.error("Delete error:", error.message);
+      return;
+    }
+
     const newImages = [...images];
     newImages.splice(deleteIndex, 1);
     setImages(newImages);
-    localStorage.setItem(
-      "images",
-      JSON.stringify(newImages.map((img) => img.url))
-    );
     setDeleteIndex(null);
     setShowPasswordModal(false);
   };
@@ -72,7 +114,7 @@ export default function App() {
           className="w-12 h-12 object-contain"
         />
         <h1 className="text-4xl font-bold text-center text-indigo-900 mb-4">
-         Gibo & Issay Wedding Collage Wall
+          Gibo & Issay Wedding Collage Wall
         </h1>
       </div>
 
@@ -82,7 +124,7 @@ export default function App() {
 
       {/* Upload Button */}
       <div className="flex justify-center mb-6">
-        <label className="px-6 py-3 bg-indigo-900 text-white rounded-xl cursor-pointer shadow-lg hover:bg-indigo-900">
+        <label className="px-6 py-3 bg-indigo-900 text-white rounded-xl cursor-pointer shadow-lg hover:bg-indigo-800">
           Upload Photos
           <input
             type="file"
