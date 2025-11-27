@@ -5,7 +5,8 @@ import PasswordModal from "./components/PasswordModal";
 import FullImageModal from "./components/FullImageModal";
 
 const SUPABASE_URL = "https://csnwhimbfcqnymjugsom.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbndoaW1iZmNxbnltanVnc29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNDc1NzksImV4cCI6MjA3OTcyMzU3OX0.exwo5xPHyjm7K913k9lMP75w-BZabXlDAWLNWHkE2y0";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbndoaW1iZmNxbnltanVnc29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNDc1NzksImV4cCI6MjA3OTcyMzU3OX0.exwo5xPHyjm7K913k9lMP75w-BZabXlDAWLNWHkE2y0";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DELETE_PASSWORD = "secret123";
@@ -46,7 +47,7 @@ export default function App() {
 
     try {
       for (let file of files) {
-        if (!file.type.startsWith('image/')) {
+        if (!file.type.startsWith("image/")) {
           console.warn(`Skipping non-image file: ${file.name}`);
           continue;
         }
@@ -64,25 +65,25 @@ export default function App() {
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from("wedding_photos")
-          .getPublicUrl(filePath);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("wedding_photos").getPublicUrl(filePath);
 
         // ✅ FIXED: Only insert the URL (the only column that likely exists)
         const { data: insertData, error: insertError } = await supabase
           .from("images")
-          .insert([{ 
-            url: publicUrl 
-            // Remove all other columns for now
-          }])
+          .insert([
+            {
+              url: publicUrl,
+              // Remove all other columns for now
+            },
+          ])
           .select();
 
         if (insertError) {
           console.error("Insert table error:", insertError.message);
           // Clean up uploaded file
-          await supabase.storage
-            .from("wedding_photos")
-            .remove([filePath]);
+          await supabase.storage.from("wedding_photos").remove([filePath]);
           continue;
         }
 
@@ -90,69 +91,67 @@ export default function App() {
           // Store the file path in memory for deletion (not in database)
           const imageWithPath = {
             ...insertData[0],
-            path: filePath // Store locally for deletion
+            path: filePath, // Store locally for deletion
           };
           uploadedImages.push(imageWithPath);
         }
       }
-
-    
-
     } catch (error) {
       console.error("Upload process error:", error);
       alert("Error uploading images. Please try again.");
     } finally {
       setUploading(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
   // Updated delete function that extracts path from URL
   // In your App.jsx - make sure this delete function is present
-const handleDeleteConfirmed = async () => {
-  if (deleteIndex === null) return;
+  const handleDeleteConfirmed = async () => {
+    if (deleteIndex === null) return;
 
-  const imageToDelete = images[deleteIndex];
+    const imageToDelete = images[deleteIndex];
 
-  try {
-    let filePath = imageToDelete.path;
-    
-    // If path isn't stored, extract from URL
-    if (!filePath && imageToDelete.url) {
-      const urlParts = imageToDelete.url.split('/storage/v1/object/public/wedding_photos/');
-      if (urlParts.length > 1) {
-        filePath = urlParts[1];
+    try {
+      let filePath = imageToDelete.path;
+
+      // If path isn't stored, extract from URL
+      if (!filePath && imageToDelete.url) {
+        const urlParts = imageToDelete.url.split(
+          "/storage/v1/object/public/wedding_photos/"
+        );
+        if (urlParts.length > 1) {
+          filePath = urlParts[1];
+        }
       }
+
+      // Delete from storage
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from("wedding_photos")
+          .remove([filePath]);
+
+        if (storageError) throw storageError;
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from("images")
+        .delete()
+        .eq("id", imageToDelete.id);
+
+      if (dbError) throw dbError;
+
+      // Update UI
+      setImages((prev) => prev.filter((_, index) => index !== deleteIndex));
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Error deleting image: " + error.message);
+    } finally {
+      setDeleteIndex(null);
+      setShowPasswordModal(false);
     }
-
-    // Delete from storage
-    if (filePath) {
-      const { error: storageError } = await supabase.storage
-        .from("wedding_photos")
-        .remove([filePath]);
-      
-      if (storageError) throw storageError;
-    }
-
-    // Delete from database
-    const { error: dbError } = await supabase
-      .from("images")
-      .delete()
-      .eq("id", imageToDelete.id);
-
-    if (dbError) throw dbError;
-
-    // Update UI
-    setImages(prev => prev.filter((_, index) => index !== deleteIndex));
-    
-  } catch (error) {
-    console.error("Delete error:", error);
-    alert("Error deleting image: " + error.message);
-  } finally {
-    setDeleteIndex(null);
-    setShowPasswordModal(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[url('/bg.png')] bg-cover bg-center bg-no-repeat p-6">
@@ -172,10 +171,12 @@ const handleDeleteConfirmed = async () => {
       </p>
 
       <div className="flex justify-center mb-6">
-        <label className={`px-6 py-3 bg-indigo-900 text-white rounded-xl cursor-pointer shadow-lg hover:bg-indigo-700 transition-colors ${
-          uploading ? 'opacity-50 cursor-not-allowed' : ''
-        }`}>
-          {uploading ? 'Uploading...' : 'Upload Photos'}
+        <label
+          className={`px-6 py-3 bg-indigo-900 text-white rounded-xl cursor-pointer shadow-lg hover:bg-indigo-700 transition-colors ${
+            uploading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          {uploading ? "Uploading..." : "Upload Photos"}
           <input
             type="file"
             multiple
@@ -193,7 +194,6 @@ const handleDeleteConfirmed = async () => {
         </div>
       )}
 
-    
       <MasonryGrid
         images={images}
         setDeleteIndex={setDeleteIndex}
@@ -213,7 +213,14 @@ const handleDeleteConfirmed = async () => {
       )}
 
       {fullImage && (
-        <FullImageModal url={fullImage} onClose={() => setFullImage(null)} />
+        <FullImageModal
+          image={fullImage}
+          onClose={() => setFullImage(null)}
+          onDeleteRequest={() => {
+            setDeleteIndex(images.findIndex((i) => i.id === fullImage.id));
+            setShowPasswordModal(true);
+          }}
+        />
       )}
     </div>
   );
