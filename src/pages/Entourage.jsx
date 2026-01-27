@@ -9,6 +9,9 @@ import {
   Coins,
   LucideGem,
   Sparkles,
+  Star,
+  LucideChessQueen,
+  LucideChessKing,
 } from "lucide-react";
 
 export default function Entourage() {
@@ -18,7 +21,7 @@ export default function Entourage() {
       icon: <Heart className="w-6 h-6 text-pink-600" />,
       members: [
         { name: "Gilbert Magano", role: "Groom" },
-        { name: "Clarissa Rostrollo", role: "Bride" },
+        { name: "Clarissa V. Rostrollo", role: "Bride" },
       ],
     },
     {
@@ -34,6 +37,7 @@ export default function Entourage() {
         { name: "Ma. Cristina V. Rostrollo" },
       ],
     },
+
     {
       title: "Ninong",
       icon: <Crown className="w-6 h-6 text-amber-600" />,
@@ -63,6 +67,32 @@ export default function Entourage() {
       ],
     },
     {
+      title: "Groomsmen",
+      icon: <LucideChessKing className="w-6 h-6 text-amber-600" />,
+      members: [
+        { name: "Jayson L. Gorospe" },
+        { name: "Edan A. Belgica" },
+        { name: "Clarence V. Rostrollo" },
+        { name: "Ryan Kenneth C. Dayoc" },
+        { name: "Jimwell G. Dacanay" },
+        { name: "Aivan Cacho" },
+        { name: "John Carlo Benjamin" },
+      ],
+    },
+    {
+      title: "Bridesmaids",
+      icon: <LucideChessQueen className="w-6 h-6 text-rose-500" />,
+      members: [
+        { name: "Claire Andrea V. Rostrollo" },
+        { name: "Charmaine V. Rostrollo" },
+        { name: "Andrea E. Magano" },
+        { name: "Mildred Q. Valdepeña" },
+        { name: "Camille Airah V. Rostrollo" },
+        { name: "Jovelyn D. Ocampo" },
+        { name: "Ehryn Keisha M. Capitle" },
+      ],
+    },
+    {
       title: "Candle",
       icon: <Flame className="w-6 h-6 text-orange-500" />,
       members: [
@@ -73,7 +103,10 @@ export default function Entourage() {
     {
       title: "Veil",
       icon: <Eye className="w-6 h-6 text-purple-500" />,
-      members: [{ name: "Charmaine V. Rostrollo" }, { name: "Edan Belgica" }],
+      members: [
+        { name: "Charmaine V. Rostrollo" },
+        { name: "Edan A. Belgica" },
+      ],
     },
     {
       title: "Cord",
