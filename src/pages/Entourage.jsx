@@ -9,7 +9,7 @@ import {
   Coins,
   LucideGem,
   Sparkles,
-  Star,
+  HandHeartIcon,
   LucideChessQueen,
   LucideChessKing,
 } from "lucide-react";
@@ -17,7 +17,7 @@ import {
 export default function Entourage() {
   const sections = [
     {
-      title: "The Bride & Groom",
+      title: "The Groom & Bride",
       icon: <Heart className="w-6 h-6 text-pink-600" />,
       members: [
         { name: "Gilbert Magano", role: "Groom" },
@@ -37,7 +37,14 @@ export default function Entourage() {
         { name: "Ma. Cristina V. Rostrollo" },
       ],
     },
-
+    {
+      title: "The Best Man & Maid of Honor",
+      icon: <HandHeartIcon className="w-6 h-6 text-pink-600" />,
+      members: [
+        { name: "Stephen Clet", role: "Best Man" },
+        { name: "Ruth Shiela Ludovice", role: "Maid of Honor" },
+      ],
+    },
     {
       title: "Ninong",
       icon: <Crown className="w-6 h-6 text-amber-600" />,
